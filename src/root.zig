@@ -1,6 +1,7 @@
 pub const board = @import("board.zig");
 pub const Tile = board.Tile;
 
+
 pub const Nation = enum {
     AustriaHungary,
     GreatBritain,
@@ -42,3 +43,6 @@ pub const Fleet = struct {
 };
 
 
+test "smd" {
+
+}

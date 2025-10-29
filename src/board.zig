@@ -2,6 +2,8 @@ const std = @import("std");
 
 const lib = @import("root.zig");
 
+const rl = @import("raylib");
+
 
 pub const Tile = struct {
     pub const Kind = enum {
@@ -15,13 +17,15 @@ pub const Tile = struct {
     nation: lib.Nation,
     neighbors: std.ArrayList(*@This()),
     is_supply_center: bool,
+    draw_pos: rl.Vector2,
 
-    pub fn init(alloc: std.mem.Allocator, name: []const u8, kind: Kind, nation: lib.Nation, is_supply_center: bool, capacity: ?usize) !@This() {
+    pub fn init(alloc: std.mem.Allocator, name: []const u8, kind: Kind, nation: lib.Nation, is_supply_center: bool, draw_pos: rl.Vector2, capacity: ?usize) !@This() {
         return .{
             .name = name,
             .kind = kind,
             .nation = nation,
             .is_supply_center = is_supply_center,
+            .draw_pos = draw_pos,
             .neighbors = try std.ArrayList(*@This()).initCapacity(alloc, capacity orelse 16)
         };
     }
@@ -74,18 +78,18 @@ pub const Board = struct {
     ///
     /// Format:
     ///
-    /// ``<'^' if supply base><NAME> -> <KIND> <NATION> [ <NEIGHBOR_NAME0> <NEIGHBOR_NAME1> ]``
+    /// ``<'^' if supply base><NAME> -> <KIND> <NATION> <DRAW_X> <DRAW_Y> [ <NEIGHBOR_NAME0> <NEIGHBOR_NAME1> ]``
     ///
     /// Neighbors have to be defined above already.
     ///
     /// Example:
     ///
     /// ```
-    /// ^NewYork -> Inland Neutral                          // '^' means that it is a supply hub
+    /// ^NewYork -> Inland Neutral 250 10                          // '^' means that it is a supply hub
     ///
-    /// Berlin -> Coast Germany [ NewYork ]                 // adding London to the Neighbors here would error, as London is not yet defined
+    /// Berlin -> Coast Germany 10 0 [ NewYork ]                   // adding London to the Neighbors here would error, as London is not yet defined
     ///
-    /// ^London -> Water AustriaHungary [ NewYork Berlin ]  // London gets linked to Berlin
+    /// ^London -> Water AustriaHungary 30 150 [ NewYork Berlin ]  // London gets linked to Berlin
     /// ```
     pub fn StringParser(comptime buildstr: []const u8) type {
         return struct {
@@ -128,9 +132,25 @@ pub const Board = struct {
                         return error.UndefinedNation;
                     };
 
+                    // determine the tile draw x
+                    self.step(); self.skipWhitespace();
+                    const draw_x = try std.fmt.parseInt(u32, self.word(), 10);
+
+                    // determine the tile draw y
+                    self.step(); self.skipWhitespace();
+                    const draw_y = try std.fmt.parseInt(u32, self.word(), 10);
+
                     // build tile
                     try board.append(
-                        try Tile.init(alloc, name, kind, nation, supply, null)
+                        try Tile.init(
+                            alloc,
+                            name,
+                            kind,
+                            nation,
+                            supply,
+                            .{.x = @floatFromInt(draw_x), .y = @floatFromInt(draw_y)},
+                            null
+                        )
                     );
 
                     // iterate over link list
@@ -252,9 +272,9 @@ test "basicGraph" {
     var graph = try Board.init(alloc, 6);
     defer graph.deinit(alloc);
 
-    try graph.append(try Tile.init(alloc, "Berlin", .Inland, .Neutral, false, null));
-    try graph.append(try Tile.init(alloc, "Senegal", .Inland, .Neutral, false, null));
-    try graph.append(try Tile.init(alloc, "Paris", .Inland, .Neutral, false, null));
+    try graph.append(try .init(alloc, "Berlin", .Inland, .Neutral, false, .zero(), null));
+    try graph.append(try .init(alloc, "Senegal", .Inland, .Neutral, false, .zero(), null));
+    try graph.append(try .init(alloc, "Paris", .Inland, .Neutral, false, .zero(), null));
 
     try std.testing.expectEqual(null, graph.getTile("NewYork"));
 
@@ -273,16 +293,16 @@ test "build from string" {
     const alloc = std.testing.allocator;
 
     const Builder = Board.StringParser(
-        "^Edinburgh -> Coast GreatBritain " ++
-        "York -> Coast GreatBritain [ Edinburgh ] " ++
-        "^London -> Coast GreatBritain [ York ] " ++
-        "Wales -> Coast GreatBritain [ London York ] " ++
-        "^Liverpool -> Coast GreatBritain [ Wales York Edinburgh ] " ++
-        "Clyde -> Coast GreatBritain [ Edinburgh Liverpool ] " ++
-        "IrishSea -> Water Neutral [ Wales Liverpool ] " ++
-        "EnglishChannel -> Water Neutral [ London ] " ++
-        "NorthSea -> Water Neutral [ London York Edinburgh ] " ++
-        "NorthAtlantic -> Water Neutral [ Clyde Liverpool ]"
+        "^Edinburgh -> Coast GreatBritain 50 10 " ++
+        "York -> Coast GreatBritain 10 50 [ Edinburgh ] " ++
+        "^London -> Coast GreatBritain 50 10 [ York ] " ++
+        "Wales -> Coast GreatBritain 10 50 [ London York ] " ++
+        "^Liverpool -> Coast GreatBritain 50 10 [ Wales York Edinburgh ] " ++
+        "Clyde -> Coast GreatBritain 10 50 [ Edinburgh Liverpool ] " ++
+        "IrishSea -> Water Neutral 50 10 [ Wales Liverpool ] " ++
+        "EnglishChannel -> Water Neutral 10 50 [ London ] " ++
+        "NorthSea -> Water Neutral 50 10 [ London York Edinburgh ] " ++
+        "NorthAtlantic -> Water Neutral 10 50 [ Clyde Liverpool ]"
     );
     var board = try Builder.parse(alloc);
 
