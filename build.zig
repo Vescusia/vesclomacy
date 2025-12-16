@@ -48,6 +48,20 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize
     });
 
+    // create parser module
+    const parser = b.createModule(.{
+        .root_source_file = b.path("src/parser.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // create solver module
+    const solver = b.createModule(.{
+        .root_source_file = b.path("src/solver.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
     // to the module defined above, it's sometimes preferable to split business
@@ -128,12 +142,16 @@ pub fn build(b: *std.Build) void {
     // add tests
     const exe_tests = b.addTest(.{ .root_module = exe.root_module });
     const lib_tests = b.addTest(.{ .root_module = mod });
-    const sorted_list_tests = b.addTest(.{ .root_module = sorted_list});
+    const sorted_list_tests = b.addTest(.{ .root_module = sorted_list });
+    const parser_tests = b.addTest(.{ .root_module = parser });
+    const solver_tests = b.addTest(.{ .root_module = solver });
 
     // run all tests
     test_step.dependOn(&b.addRunArtifact(exe_tests).step);
     test_step.dependOn(&b.addRunArtifact(lib_tests).step);
     test_step.dependOn(&b.addRunArtifact(sorted_list_tests).step);
+    test_step.dependOn(&b.addRunArtifact(parser_tests).step);
+    test_step.dependOn(&b.addRunArtifact(solver_tests).step);
 
     // add benchmarking files
     const bench_sorted_list = b.addExecutable(.{

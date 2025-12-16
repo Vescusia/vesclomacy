@@ -27,7 +27,7 @@ pub fn id(comptime T: type) fn (T) T {
 ///
 /// For very small amount of items, <100, it will probably outperform the standard library HashMaps.
 /// For more items, please use HashMaps.
-pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) HashT) type {
+pub fn SortedList(comptime T: type, comptime HashT: type, comptime asInt: fn(T) HashT) type {
     if (@typeInfo(HashT) != .int) {
         @compileError("Type 'IntT' has to be an Integer.");
     }
@@ -43,7 +43,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
             .capacity = 0
         };
 
-        pub fn init(alloc: std.mem.Allocator, initial_capacity: usize) !Self {
+        pub fn init(alloc: std.mem.Allocator, initial_capacity: usize) std.mem.Allocator.Error!Self {
             const self = Self{
                 .capacity = initial_capacity,
                 .items = (try alloc.alloc(T, initial_capacity)).ptr[0..0],
@@ -53,19 +53,19 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
         }
 
         fn hashAt(self: Self, idx: usize) HashT {
-            return toInt(self.items[idx]);
+            return asInt(self.items[idx]);
         }
 
-        pub fn at(self: Self, idx: usize) T {
-            return self.items[idx];
+        pub fn at(self: Self, idx: usize) *T {
+            return &self.items[idx];
         }
 
-        pub fn get(self: Self, hash: HashT) ?T {
+        pub fn get(self: Self, hash: HashT) ?*T {
             const search_result = self.searchRaw(hash);
-            switch (search_result) {
-                .FoundAt => |idx| self.items[idx],
-                .WouldBeAt => |_| return null,
-            }
+            return switch (search_result) {
+                .FoundAt => |idx| &self.items[idx],
+                .WouldBeAt => |_| null,
+            };
         }
 
         /// Removes and returns the last (largest) element of the List.
@@ -107,7 +107,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
         /// Insert an Item to the list.
         /// The Item will be swapped down to its proper position (a bit like Insertion Sort).
         /// This method can be equally as performant as ``.insertBS`` for smaller lists (~< 1000 Items).
-        pub fn insertIS(self: *Self, alloc: std.mem.Allocator, item: T) !void {
+        pub fn insertIS(self: *Self, alloc: std.mem.Allocator, item: T) std.mem.Allocator.Error!void {
             try self.ensureCapacity(alloc, self.items.len + 1);
 
             self.items.len += 1;
@@ -117,7 +117,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
                 return;
             }
 
-            const hash = toInt(item);
+            const hash = asInt(item);
 
             var i = self.items.len - 1;
             while (i > 0 and hash < self.hashAt(i)) : ({ i -= 1; }) {
@@ -155,10 +155,10 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
         /// The proper position of the Item will be determined using Binary Search,
         /// after which all items with an index greater than the determined index of the new item
         /// will be mem-moved to make space for the new item.
-        pub fn insertBS(self: *Self, alloc: std.mem.Allocator, item: T) !void {
+        pub fn insertBS(self: *Self, alloc: std.mem.Allocator, item: T) std.mem.Allocator.Error!void {
             try self.ensureCapacity(alloc, self.items.len+1);
 
-            const pos = switch (self.searchRaw(toInt(item))) {
+            const pos = switch (self.searchRaw(asInt(item))) {
                 .FoundAt => unreachable,
                 .WouldBeAt => |idx| idx,
             };
@@ -169,7 +169,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime toInt: fn(T) 
             self.items[pos] = item;
         }
 
-        fn ensureCapacity(self: *Self, alloc: std.mem.Allocator, capacity: usize) !void {
+        fn ensureCapacity(self: *Self, alloc: std.mem.Allocator, capacity: usize) std.mem.Allocator.Error!void {
             if (capacity <= self.capacity) return;
 
             const new_capacity = capacity * 2;
@@ -244,7 +244,7 @@ test "insertIS" {
 }
 
 test "hashedString" {
-    const ToInt = struct {
+    const AsInt = struct {
         fn map(item: [3]u8) u24 {
             return @bitCast(item);
         }
@@ -252,7 +252,7 @@ test "hashedString" {
 
     const alloc = std.testing.allocator;
 
-    var list = try SortedList([3]u8, u24, ToInt.map).init(alloc, 8);
+    var list = try SortedList([3]u8, u24, AsInt.map).init(alloc, 8);
     defer list.deinit(alloc);
 
     const items = [_]*const [3]u8{"txt", "pop", "bat", "xdd"};
