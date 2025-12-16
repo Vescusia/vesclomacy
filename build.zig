@@ -21,16 +21,6 @@ pub fn build(b: *std.Build) void {
     // target and optimize options) will be listed when running `zig build --help`
     // in this directory.
 
-    // add raylib dependency
-    const raylib_dep = b.dependency("raylib_zig", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const raylib = raylib_dep.module("raylib"); // main raylib module
-    const raygui = raylib_dep.module("raygui"); // raygui module
-    const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
-
     // This creates a module, which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.
     // Zig modules are the preferred way of making Zig code available to consumers.
@@ -49,6 +39,13 @@ pub fn build(b: *std.Build) void {
         // Later on we'll use this module as the root module of a test executable
         // which requires us to specify a target.
         .target = target,
+    });
+
+    // create sorted list module
+    const sorted_list = b.createModule(.{
+        .root_source_file = b.path("src/sorted_list.zig"),
+        .target = target,
+        .optimize = optimize
     });
 
     // Here we define an executable. An executable needs to have a root module
@@ -89,14 +86,9 @@ pub fn build(b: *std.Build) void {
                 // can be extremely useful in case of collisions (which can happen
                 // importing modules from different packages).
                 .{ .name = "vesclomacy", .module = mod },
-                .{ .name = "raylib", .module = raylib },
-                .{ .name = "raygui", .module = raygui },
             },
         }),
     });
-
-    // link raylib c library
-    exe.root_module.linkLibrary(raylib_artifact);
 
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default
@@ -130,18 +122,27 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    // run all tests
-    const exe_tests0 = b.addTest(.{ .root_module = b.createModule(.{
-        .root_source_file = b.path("src/board.zig"),
-        .target = target,
-        .imports = &.{
-            .{ .name = "raylib", .module = raylib },
-        }
-    })});
-    exe_tests0.root_module.addImport("raylib", raylib);
-    exe_tests0.root_module.linkLibrary(raylib_artifact);
-
+    // create test step
     const test_step = b.step("test", "Run unit tests");
-    const run_tests = b.addRunArtifact(exe_tests0);
-    test_step.dependOn(&run_tests.step);
+
+    // add tests
+    const exe_tests = b.addTest(.{ .root_module = exe.root_module });
+    const lib_tests = b.addTest(.{ .root_module = mod });
+    const sorted_list_tests = b.addTest(.{ .root_module = sorted_list});
+
+    // run all tests
+    test_step.dependOn(&b.addRunArtifact(exe_tests).step);
+    test_step.dependOn(&b.addRunArtifact(lib_tests).step);
+    test_step.dependOn(&b.addRunArtifact(sorted_list_tests).step);
+
+    // add benchmarking files
+    const bench_sorted_list = b.addExecutable(.{
+        .name = "bench_sorted_list",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/bench_sorted_list.zig"),
+            .target = target,
+            .optimize = optimize,
+        })
+    });
+    b.installArtifact(bench_sorted_list);
 }
