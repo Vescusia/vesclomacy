@@ -10,10 +10,6 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     const alloc = gpa.allocator();
 
-    // get stdout
-    var stdout_buf: [1024]u8 = undefined;
-    var stdout = std.fs.File.stdout().writer(&stdout_buf);
-
     // get args
     const args = try std.process.argsAlloc(alloc);
     defer std.process.argsFree(alloc, args);
@@ -55,25 +51,19 @@ pub fn main() !void {
     try reader.interface.fill(size);
 
     // parse text
-    var parsed = try parser.parseActions(buf, alloc);
+    const parsed = try parser.parseActions(buf, alloc);
     defer parsed.deinit(alloc);
 
-    try stdout.interface.print("\nIN:\n", .{});
-    for (parsed.items) |cell| {
-        try stdout.interface.print("  {f}\n", .{cell});
-    }
+    // buffer for solving
+    var to_solve = try parser.Cells.init(alloc, parsed.items.len);
+    defer to_solve.deinit(alloc);
 
     // solve positions
-    solver.solve(parsed);
+    for (0..(1 << 16)) |_| {
+        @memcpy(to_solve.items.ptr, parsed.items);
+        to_solve.items.len = parsed.items.len;
 
-    // print results
-    try stdout.interface.print("\nOUT:\n", .{});
-    for (parsed.items) |cell| {
-        switch (cell.action) {
-            .Aborted => |by| try stdout.interface.print("  [STOP] {f}  by  {f}\n", .{cell.name, by.who}),
-            .Flee => |by| try stdout.interface.print("  [FLEE] {f}  by  {f}\n", .{cell.name, by.who}),
-            else => try stdout.interface.print("  [DONE] {f}\n", .{cell})
-        }
+        solver.solve(parsed);
+        _ = to_solve.at(0);
     }
-    try stdout.interface.flush();
 }

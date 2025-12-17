@@ -192,7 +192,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime asInt: fn(T) 
             }
         }
 
-        pub fn deinit(self: *Self, alloc: std.mem.Allocator) void {
+        pub fn deinit(self: Self, alloc: std.mem.Allocator) void {
             alloc.free(self.items.ptr[0..self.capacity]);
         }
     };

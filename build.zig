@@ -163,4 +163,14 @@ pub fn build(b: *std.Build) void {
         })
     });
     b.installArtifact(bench_sorted_list);
+
+    const bench_solver = b.addExecutable(.{
+        .name = "bench_solver",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/bench_solver.zig"),
+            .target = target,
+            .optimize = optimize,
+        })
+    });
+    b.installArtifact(bench_solver);
 }

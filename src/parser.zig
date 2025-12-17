@@ -102,16 +102,16 @@ pub fn parseActions(bytes: []u8, alloc: std.mem.Allocator) !Cells {
                 const action = switch (acToI(action_str)) {
                     acToI("move".*) => mv: {
                         const to = txt.take(3); txt = txt.skip(3);
-                        break :mv lib.Action{ .Move = .{ .to = to } };
+                        break :mv lib.Action{ .Move = .{ .to = .fromArr(to) } };
                     },
                     acToI("hold".*) => lib.Action.Hold,
                     acToI("supp".*) => sup: {
                         const who = txt.take(3); txt = txt.skip(3);
-                        break :sup lib.Action{ .Support = .{ .who = who } };
+                        break :sup lib.Action{ .Support = .{ .who = .fromArr(who) } };
                     },
                     acToI("conv".*) => cv: {
                         const from = txt.take(3); txt = txt.skip(3);
-                        break :cv lib.Action{ .Convoy = .{ .from = from } };
+                        break :cv lib.Action{ .Convoy = .{ .from = .fromArr(from) } };
                     },
                     else => {
                         std.log.err("InvalidAction: '{s}'\n", .{&action_str});
@@ -120,7 +120,7 @@ pub fn parseActions(bytes: []u8, alloc: std.mem.Allocator) !Cells {
                 };
 
                 const cell = lib.Cell{
-                    .name = name,
+                    .name = .fromArr(name),
                     .action = action,
                 };
 

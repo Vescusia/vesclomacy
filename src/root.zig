@@ -1,39 +1,67 @@
 const std = @import("std");
 
-pub const NameT = [3]u8;
+pub const Name = packed struct {
+    int: u24,
 
-pub fn nToI(name: NameT) u24 {
-    return @bitCast(name);
-}
+    pub const Self = @This();
+
+    pub fn asStr(self: Self) [3]u8 {
+        return @bitCast(self.int);
+    }
+
+    pub fn eq(self: Self, other: Self) bool {
+        return self.asInt() == other.asInt();
+    }
+
+    pub fn fromStr(str: []u8) Self {
+        return .{ .int = str.ptr[0..3] };
+    }
+
+    pub fn fromInt(int: u24) Self {
+        return .{ .int = @bitCast(int) };
+    }
+
+    pub fn fromArr(arr: [3]u8) Self {
+        return .{ .int = @bitCast(arr) };
+    }
+
+    pub fn format(
+        self: @This(),
+        writer: *std.Io.Writer,
+    ) std.Io.Writer.Error!void
+    {
+        try writer.writeAll(&self.asStr());
+    }
+};
 
 pub const Action = union(enum(u3)) {
-    Move: struct { to: NameT },
-    Support: struct { who: NameT },
+    Move: struct { to: Name },
+    Support: struct { who: Name },
     Hold,
-    Convoy: struct { from: NameT },
-    Aborted: struct { who: NameT, },
-    Flee: struct {  who: NameT },
+    Convoy: struct { from: Name },
+    Aborted: struct { who: Name, },
+    Flee: struct {  who: Name },
 
-    pub fn abort(by: NameT) @This() {
+    pub fn abort(by: Name) @This() {
         return .{ .Aborted = .{ .who = by } };
     }
 
-    pub fn flee(by: NameT) @This() {
+    pub fn flee(by: Name) @This() {
         return .{ .Flee = .{ .who = by } };
     }
 };
 
 pub const Cell = struct {
-    name: NameT,
+    name: Name,
     action: Action,
 
     const Self = @This();
 
     pub fn asInt(self: Self) u24 {
-        return nToI(self.name);
+        return self.name.int;
     }
 
-    pub fn wantToBeAt(self: Self) NameT {
+    pub fn wantToBeAt(self: Self) Name {
         return switch (self.action) {
             .Move => |mv| mv.to,
             else  => self.name
@@ -44,21 +72,28 @@ pub const Cell = struct {
         return self.asInt() == other.asInt();
     }
 
+    pub fn abort(self: *Self, by: Name) void {
+        self.action = .abort(by);
+    }
+
+    pub fn flee(self: *Self, by: Name) void {
+        self.action = .flee(by);
+    }
 
     pub fn format(
-    self: @This(),
-    writer: *std.Io.Writer,
+        self: @This(),
+        writer: *std.Io.Writer,
     ) std.Io.Writer.Error!void
     {
-    try writer.writeAll(&self.name);
+    try writer.writeAll(&self.name.asStr());
 
     try switch (self.action) {
-        .Move => |move| writer.print(" move {s}", .{move.to}),
-        .Support => |sup| writer.print(" supp {s}",.{sup.who}),
+        .Move => |move| writer.print(" move {f}", .{move.to}),
+        .Support => |sup| writer.print(" supp {f}",.{sup.who}),
         .Hold => writer.print(" hold", .{}),
-        .Convoy => |conv| writer.print(" conv {s}", .{conv.from}),
-        .Aborted => |abort| writer.print(" stop (by {s})", .{abort.who}),
-        .Flee => |flee| writer.print(" flee (by {s})", .{flee.who}),
+        .Convoy => |conv| writer.print(" conv {f}", .{conv.from}),
+        .Aborted => |by| writer.print(" stop (by {f})", .{by.who}),
+        .Flee => |by| writer.print(" flee (by {f})", .{by.who}),
     };
     }
 };
