@@ -110,9 +110,8 @@ pub fn parseActions(bytes: []u8, alloc: std.mem.Allocator) !Cells {
                         break :sup lib.Action{ .Support = .{ .who = who } };
                     },
                     acToI("conv".*) => cv: {
-                        const from = txt.take(3); txt = txt.skip(3).skipWhitespace();
-                        const to = txt.take(3); txt = txt.skip(3);
-                        break :cv lib.Action{ .Convoy = .{ .from = from, .to = to } };
+                        const from = txt.take(3); txt = txt.skip(3);
+                        break :cv lib.Action{ .Convoy = .{ .from = from } };
                     },
                     else => {
                         std.log.err("InvalidAction: '{s}'\n", .{&action_str});
@@ -141,18 +140,22 @@ pub fn parseActions(bytes: []u8, alloc: std.mem.Allocator) !Cells {
 test "basics" {
     const alloc = std.testing.allocator;
 
-    var cells = try parseActions(
-        \\ bul move ind
-        \\ # sdsdds
-        \\
-        \\ tur supp bul
-        \\
-        \\ kor
-        \\ hold
-        \\
-        \\ pet move pak
-        \\ blk conv pet pak
-    , alloc);
+    const text = \\ bul move ind
+                \\ # sdsdds
+                \\
+                \\ tur supp bul
+                \\
+                \\ kor
+                \\ hold
+                \\
+                \\ pet move pak
+                \\ blk conv pet
+    ;
+
+    const mod_text = try alloc.dupe(u8, text);
+    defer alloc.free(mod_text);
+
+    var cells = try parseActions(mod_text, alloc);
 
     cells.deinit(alloc);
 }

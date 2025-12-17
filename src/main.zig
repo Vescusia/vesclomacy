@@ -64,14 +64,14 @@ pub fn main() !void {
     }
 
     // solve positions
-    solver.solve(parsed);
+    try solver.solve(parsed, alloc);
 
     // print results
     try stdout.interface.print("\nOUT:\n", .{});
     for (parsed.items) |cell| {
         switch (cell.action) {
-            .Aborted => |by| try stdout.interface.print("  [STOP] {s} by   {s}\n", .{cell.name, by.who}),
-            .Flee => |by| try stdout.interface.print("  [FLEE] {s} by   {s}\n", .{cell.name, by.who}),
+            .Aborted => |by| try stdout.interface.print("  [STOP] {s}  by  {s}\n", .{cell.name, by.who}),
+            .Flee => |by| try stdout.interface.print("  [FLEE] {s}  by  {s}\n", .{cell.name, by.who}),
             else => try stdout.interface.print("  [DONE] {f}\n", .{cell})
         }
     }

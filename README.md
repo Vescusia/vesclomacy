@@ -9,7 +9,7 @@ The binary will be in `zig-out/bin/`.
 
 # Usage
 ## Create a file containing the moves your players want to make
-An example of the format:
+[An example](example-moves.txt) of the format:
 ```text
 # This is a comment
 
@@ -24,7 +24,7 @@ mar supp spa
 
 # This is a Convoy from the province 'por' to the province 'bre', through the sea 'mid'
 por move bre
-mid conv por bre
+mid conv por
 
 # Order of operations does *not* matter
 # Any Province Name is valid (misspells included!)
@@ -38,15 +38,15 @@ info: Opening file 'example-moves.txt'
 
 IN:
   spa move gas
-  mid conv (por move bre)
+  mid conv por
   mar supp spa
   por move bre
   gas hold
 
 OUT:
   [DONE] spa move gas
-  [DONE] mid conv (por move bre)
+  [DONE] mid conv por
   [DONE] mar supp spa
   [DONE] por move bre
-  [FLEE] gas by   spa
+  [FLEE] gas  by  spa
 ```

@@ -1,0 +1,18 @@
+# This is a comment
+
+# This is a Move from the province 'spa' to the province 'gas':
+spa move gas
+
+# This is a Hold in the province 'gas':
+gas hold
+
+# This is a Support for 'spa', trying to move to 'gas', from the province 'mar':
+mar supp spa
+
+# This is a Convoy from the province 'por' to the province 'bre', through the sea 'mid'
+por move bre
+mid conv por
+
+# Order of operations does *not* matter
+# Any Province Name is valid (misspells included!)
+# Inline comments are not allowed
