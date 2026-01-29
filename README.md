@@ -1,5 +1,5 @@
 # Installation
-First, install [Zig](https://ziglang.org) if you have not already.
+First, install [Zig](https://ziglang.org) if you have done so not already.
 
 Then, clone this repository: ``git clone https://github.com/Vescusia/vesclomacy.git``
 
@@ -16,6 +16,10 @@ The binary will be in `zig-out/bin/`.
 # This is a Move from the province 'spa' to the province 'gas':
 spa move gas
 
+# Provinces names always have to be 3 characters and may only be a-z!
+# This would be invalid:
+# spa0 move gase
+
 # This is a Hold in the province 'gas':
 gas hold
 
@@ -27,12 +31,12 @@ por move bre
 mid conv por
 
 # Order of operations does *not* matter
-# Any Province Name is valid (misspells included!)
+# Misspelled Provinces are treated as different Provinces!
 # Inline comments are not allowed
 ```
 
 ## Solve the Dependencies and see which Moves are allowed to happen
-> ./zig-out/bin/vesclomacy example-moves.txt
+> zig-out/bin/vesclomacy example-moves.txt
 ```text
 info: Opening file 'example-moves.txt'
 

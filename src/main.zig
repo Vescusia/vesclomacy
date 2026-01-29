@@ -40,7 +40,7 @@ pub fn main() !void {
             break :fd std.fs.openFileAbsolute(file_path, .{});
         }
     } catch |err| {
-        std.log.err("Provided path '{s}' could not be opened: {}", .{file_path, err});
+        std.log.err("File '{s}' could not be opened.", .{file_path});
         return err;
     };
 
