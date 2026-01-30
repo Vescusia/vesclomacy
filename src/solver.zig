@@ -47,22 +47,24 @@ pub fn solve(cells: parser.Cells) void {
 
     // resolve moves where 2+ try to go to the same cell
     moves.reset();
-    main: while (moves.next()) |main_mover| {
+    while (moves.next()) |main_mover| {
         var other_movers = moves.iterFromNext();
 
+        const to = main_mover.action.Move.to;
+        const main_supports = countSupport(cells, main_mover.name);
+
         while (other_movers.next()) |other_mover| {
-            if (main_mover.action.Move.to == other_mover.action.Move.to) {
-                const main_supports = countSupport(cells, main_mover.name);
-                const other_supports = countSupport(cells, other_mover.name);
+            // skip if other mover is moving to different Cell
+            if (other_mover.action.Move.to != to) continue;
 
-                if (main_supports >= other_supports)
-                    other_mover.abort(main_mover.name);
+            const other_supports = countSupport(cells, other_mover.name);
 
-                if (other_supports >= main_supports) {
-                    main_mover.abort(other_mover.name);
-                    continue :main;  // an aborted cell cannot move anymore...
-                }
-            }
+            if (main_supports >= other_supports)
+                other_mover.abort(main_mover.name);
+
+            if (other_supports >= main_supports)
+                // still can bounce more movers! (this is correct because transitive)
+                main_mover.abort(other_mover.name);
         }
     }
 
