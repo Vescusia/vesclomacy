@@ -64,7 +64,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime asInt: fn(T) 
             const search_result = self.searchRaw(hash);
             return switch (search_result) {
                 .FoundAt => |idx| &self.items[idx],
-                .WouldBeAt => |_| null,
+                .WouldBeAt => null,
             };
         }
 
@@ -100,7 +100,7 @@ pub fn SortedList(comptime T: type, comptime HashT: type, comptime asInt: fn(T) 
             const search_result = self.searchRaw(hash);
             switch (search_result) {
                 .FoundAt => |idx| return idx,
-                .WouldBeAt => |_| return null,
+                .WouldBeAt => return null,
             }
         }
 

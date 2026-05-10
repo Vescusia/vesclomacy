@@ -153,24 +153,31 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&b.addRunArtifact(parser_tests).step);
     test_step.dependOn(&b.addRunArtifact(solver_tests).step);
 
-    // add benchmarking files
+    // add benchmark for sorted list
     const bench_sorted_list = b.addExecutable(.{
         .name = "bench_sorted_list",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/bench_sorted_list.zig"),
+            .root_source_file = b.path("src/benches/bench_sorted_list.zig"),
             .target = target,
             .optimize = optimize,
+            .imports = &.{
+                .{ .name = "sorted_list", .module = sorted_list },
+            },
         })
     });
     b.installArtifact(bench_sorted_list);
 
+    // add benchmark for solver
     const bench_solver = b.addExecutable(.{
         .name = "bench_solver",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/bench_solver.zig"),
+            .root_source_file = b.path("src/benches/bench_solver.zig"),
             .target = target,
             .optimize = optimize,
-        })
+            .imports = &.{
+                .{ .name = "vesclomacy", .module = mod },
+            },
+        }),
     });
     b.installArtifact(bench_solver);
 }

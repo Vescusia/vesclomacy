@@ -1,5 +1,9 @@
 const std = @import("std");
 
+pub const parser = @import("parser.zig");
+pub const solver = @import("solver.zig");
+
+/// Name of a Cell. This is a 3 character long shorthand for the Cell. It is represented by a u24 integer.
 pub const Name = packed struct {
     int: u24,
 
@@ -34,6 +38,7 @@ pub const Name = packed struct {
     }
 };
 
+/// Possible Action that a Cell can have
 pub const Action = union(enum(u3)) {
     Move: struct { to: Name },
     Support: struct { who: Name },
@@ -51,6 +56,7 @@ pub const Action = union(enum(u3)) {
     }
 };
 
+/// Cell/Country of the Board Game Diplomacy
 pub const Cell = struct {
     name: Name,
     action: Action,

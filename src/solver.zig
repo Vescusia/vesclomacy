@@ -51,7 +51,6 @@ pub fn solve(cells: parser.Cells) void {
         const to = main_mover.action.Move.to;
         const main_supports = countSupport(cells, main_mover.name);
 
-        std.debug.print("{s}\n", .{main_mover.name.asStr()});
         var other_moves = moves.iterFromNext();
         while (other_moves.next()) |other_mover| {
             // skip if other mover is moving to different Cell
