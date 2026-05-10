@@ -51,8 +51,9 @@ pub fn solve(cells: parser.Cells) void {
         const to = main_mover.action.Move.to;
         const main_supports = countSupport(cells, main_mover.name);
 
-        var other_movers = moves.iterFromNext();
-        while (other_movers.next()) |other_mover| {
+        std.debug.print("{s}\n", .{main_mover.name.asStr()});
+        var other_moves = moves.iterFromNext();
+        while (other_moves.next()) |other_mover| {
             // skip if other mover is moving to different Cell
             if (other_mover.action.Move.to != to) continue;
 
@@ -121,7 +122,11 @@ const ActionIterator = struct {
 
     pub fn iterFromNext(self: Self) Self {
         var new_self = self;
-        new_self.pos += 1;
+
+        // calling .next() will already increment to the next one
+        // so we just do it for the initial state manually
+        if (new_self.pos == 0) new_self.pos = 1;
+
         return new_self;
     }
 };

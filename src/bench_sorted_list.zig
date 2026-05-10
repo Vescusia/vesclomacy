@@ -5,8 +5,8 @@ const sorted_list = @import("sorted_list.zig");
 
 pub fn main() !void {
     // define consts for bench
-    const num_items = 1 << 5;
-    const num_inserts = 1 << 16;
+    const num_items = 1 << 14;
+    const num_inserts = 1 << 20;
 
     // define gpa
     var gpa = std.heap.GeneralPurposeAllocator(.{}).init;

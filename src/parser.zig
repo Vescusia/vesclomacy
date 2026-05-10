@@ -124,7 +124,7 @@ pub fn parseActions(bytes: []u8, alloc: std.mem.Allocator) !Cells {
                     .action = action,
                 };
 
-                try cells.insertBS(alloc, cell);
+                try cells.insertIS(alloc, cell);
             },
             else => {
                 std.log.err("Unknown character: '{c}'\n", .{txt.first()});
