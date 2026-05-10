@@ -48,11 +48,11 @@ pub fn main() !void {
     const size = (try file.stat()).size;
     if (size > 1 << 10) std.log.warn("File size is {} B!", .{size});
 
-    const buf = try alloc.alloc(u8, size);
+    const buf = try alloc.alloc(u8, @truncate(size));
     defer alloc.free(buf);
 
     var reader = file.reader(buf);
-    try reader.interface.fill(size);
+    try reader.interface.fill(@truncate(size));
 
     // parse text
     var parsed = try parser.parseActions(buf, alloc);

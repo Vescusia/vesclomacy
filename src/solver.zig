@@ -48,11 +48,10 @@ pub fn solve(cells: parser.Cells) void {
     // resolve moves where 2+ try to go to the same cell
     moves.reset();
     while (moves.next()) |main_mover| {
-        var other_movers = moves.iterFromNext();
-
         const to = main_mover.action.Move.to;
         const main_supports = countSupport(cells, main_mover.name);
 
+        var other_movers = moves.iterFromNext();
         while (other_movers.next()) |other_mover| {
             // skip if other mover is moving to different Cell
             if (other_mover.action.Move.to != to) continue;
